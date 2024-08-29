@@ -119,9 +119,13 @@ async def screenshot(ctx):
         screenshot_path = os.path.join(TEMP_DIR, name)
         screenshot.save(screenshot_path)
         
+<<<<<<< HEAD
         # Send the screenshot
         with open(screenshot_path, 'rb') as f:
             await ctx.send(file=discord.File(f, 'Screenshot.png'))
+=======
+    print('don1e')    
+>>>>>>> 8756ad8c3726133ad94f7533c212696985926bd3
         
         # Clean up
         os.remove(screenshot_path)
