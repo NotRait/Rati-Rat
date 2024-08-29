@@ -110,6 +110,7 @@ async def on_ready():
                 if channel.name in CHANNEL_NAMES:
                     await channel.send("@everyone online!")
                     break
+
 @bot.command(name='ss')
 async def screenshot(ctx):
     try:
