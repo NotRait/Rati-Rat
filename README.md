@@ -1,1 +1,1 @@
-"Rat coded in python." 
+Rat coded in python.
