@@ -75,7 +75,7 @@ async def on_ready():
                     await channel.delete()
                 await category.delete()
         
-    print('done')    
+    print('don1e')    
         
 
 
